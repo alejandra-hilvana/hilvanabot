@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import anthropic
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 TRANSCRIPT = """
 Hola, bienvenidos al taller de cómo sacar un patrón a través de una prenda ya hecha. Yo soy Diana Samayoa, cofundadora de Estudio 2. Comencemos.
@@ -19,15 +21,15 @@ Para la parte trasera: el ancho de tiro es 15 pulgadas (13 visibles + 2 al frent
 
 Para rectificar medidas: el costado mide 34.25 pulgadas en el trazo y en la prenda real. Si hay diferencia pequeña se corrige en la cintura. Entrepierna frente: 7.125 pulgadas. Entrepierna trasera: 13.125 pulgadas. Largo cintura a ruedo: 35 pulgadas.
 
-La pretina mide 16 pulgadas abajo y 15.5 arriba, grosor 0.625 pulgadas. Va con indicación centro cerrado (se dobla la tela sobre ese lado para que se refleje simétricamente).
+La pretina mide 16 pulgadas abajo y 15.5 arriba, grosor 0.625 pulgadas. Va con indicación centro cerrado.
 
 La careta interna mide 6.75 pulgadas de largo por 0.875 de ancho. Va centro cerrado. Se hacen dos versiones: una recta y una con curvatura en la esquina inferior.
 
 Para desglosar en papel mantequilla: se retrasea cada pieza y se agrega 0.5 pulgadas de costura en todos los lados. Al ruedo solo 0.5 pulgadas porque lleva vista.
 
-Rotulación: nombre de la pieza, nombre de la prenda, cantidad a cortar (x1 o x2), dirección del hilo tela, y si va centro cerrado.
+Rotulación: nombre de la pieza, nombre de la prenda, cantidad a cortar, dirección del hilo tela, y si va centro cerrado.
 
-Las piezas del frente son tres: pierna del frente (x2), bolsa superior (x2), bolsa inferior con fondo y vista (x2). La bolsa inferior lleva 1.5 pulgadas en la vista y 0.5 en los lados.
+Las piezas del frente son tres: pierna del frente (x2), bolsa superior (x2), bolsa inferior con fondo y vista (x2).
 
 Vista del ruedo: 2.125 pulgadas de ancho. Frente x2 y espalda x2.
 
@@ -52,19 +54,15 @@ Responde siempre en español, de forma amigable y clara para jóvenes de 14 a 18
 def hilvanabot():
     data = request.get_json()
     message = data.get("message", "")
-    
     if not message:
         return jsonify({"error": "No se recibió mensaje"}), 400
-
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-    
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=400,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": message}]
     )
-    
     return jsonify({"reply": response.content[0].text})
 
 @app.route("/", methods=["GET"])
